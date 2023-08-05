@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  svg {
+    display: block;
+    margin: 0 auto;
+    width: 200px;
+    height: 200px;
+  }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect x="45" y="10" width="10" height="60" fill="#333" />
+  <line id="needle" x1="50" y1="40" x2="50" y2="10" stroke="#f00" stroke-width="2" />
+</svg>
+
+<button id="startButton" onclick="startAnimation()">Start</button>
+<button id="playClickButton" onclick="playClick()">Play Click</button>
+<input id="bpmSlider" type="range" min="1" max="300" value="60">
+<label id="bpmLabel" for="bpmSlider">BPM: 60</label>
+
+<script>
+  let bpm = 60; // Set the initial BPM value
+  const needle = document.getElementById("needle");
+  const startButton = document.getElementById("startButton");
+  const bpmSlider = document.getElementById("bpmSlider");
+  const bpmLabel = document.getElementById("bpmLabel");
+
+  const maxAngle = 30; // Angle in degrees
+  const origin = "50% 40%"; // Rotation origin
+
+  let startTime;
+  let animationStarted = false;
+  let lastPlayedDirection = '';
+
+  const clickSound = new Audio("click.wav");
+
+  function playClick() {
+    clickSound.currentTime = 0;
+    clickSound.play();
+  }
+
+  function startAnimation() {
+    if (!animationStarted) {
+      animationStarted = true;
+      requestAnimationFrame(animateMetronome);
+      startButton.innerText = 'Stop';
+    } else {
+      animationStarted = false;
+      startButton.innerText = 'Start';
+    }
+  }
+
+  function animateMetronome(timestamp) {
+    if (!animationStarted) {
+      return;
+    }
+
+    if (!startTime) {
+      startTime = timestamp;
+    }
+
+    const elapsed = timestamp - startTime;
+    const duration = 60000 / bpm;
+
+    // Calculate the angle for the smooth sweep
+    const sineValue = Math.sin((2 * Math.PI * elapsed) / duration);
+    const angle = maxAngle * sineValue;
+
+    needle.style.transformOrigin = origin;
+    needle.style.transform = `rotate(${angle}deg)`;
+
+    // Play click sound when the needle changes direction
+    const direction = sineValue >= 0 ? 'right' : 'left';
+    if (direction !== lastPlayedDirection) {
+      playClick();
+      lastPlayedDirection = direction;
+    }
+
+    requestAnimationFrame(animateMetronome);
+  }
+
+  bpmSlider.addEventListener("input", function (event) {
+    bpm = event.target.value;
+    bpmLabel.textContent = `BPM: ${bpm}`;
+    startTime = undefined;
+  });
+</script>
+</body>
+</html>
